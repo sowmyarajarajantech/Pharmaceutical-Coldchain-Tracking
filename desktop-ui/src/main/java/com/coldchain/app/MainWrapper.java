@@ -2,7 +2,7 @@
 package com.coldchain.app;
 
 public class MainWrapper {
-    public static void main(String args) {
+    public static void main(String[] args) {
         MainApp.main(args);
     }
 }
