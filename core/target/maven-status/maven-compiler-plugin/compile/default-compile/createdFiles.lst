@@ -1,0 +1,15 @@
+com\coldchain\model\TemperatureLog.class
+com\coldchain\CoreApplication.class
+com\coldchain\dao\AlertDao.class
+com\coldchain\model\AuditLog.class
+com\coldchain\util\CsvImporter.class
+com\coldchain\model\Warehouse.class
+com\coldchain\model\Batch.class
+com\coldchain\model\User.class
+com\coldchain\dao\AuditLogDao.class
+com\coldchain\model\Role.class
+com\coldchain\service\TemperatureService.class
+com\coldchain\model\Shipment.class
+com\coldchain\util\DbUtil.class
+com\coldchain\model\Alert.class
+com\coldchain\dao\TemperatureLogDao.class
