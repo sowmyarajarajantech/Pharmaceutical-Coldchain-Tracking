@@ -1,48 +1,268 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Cold Chain Tracker</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 40px;
-      color: #333;
-    }
-    h1 {
-      color: #007bff;
-      text-align: center;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Cold Chain Tracker - Admin</title>
+    <style>
+        /* CSS styles remain the same as before */
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; color: #333; display: flex; height: 100vh; }
+        .sidebar { width: 200px; background: #343a40; color: white; padding-top: 20px; height: 100%; display: flex; flex-direction: column; }
+        .sidebar a { color: #adb5bd; padding: 15px 20px; text-decoration: none; display: block; border-bottom: 1px solid #495057; }
+        .sidebar a:hover, .sidebar a.active { background: #495057; color: white; }
+        .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #1a73e8; text-align: center; margin-bottom: 30px; margin-top: 0;}
+        button { background: #1a73e8; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.3s; margin-right: 5px; }
+        button:hover { background: #1558b0; }
+        button.delete-btn { background: #dc3545; }
+        button.delete-btn:hover { background: #c82333; }
+        #statusMessage { margin-top: 15px; padding: 10px; border-radius: 4px; background-color: #e9ecef; border: 1px solid #ced4da; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        .crud-section { display: none; }
+        .crud-section.active { display: block; }
+        .crud-form { margin-top: 30px; padding: 20px; border: 1px solid #dee2e6; border-radius: 5px; background-color: #fdfdfd; display: none; }
+        .crud-form h2 { margin-top: 0; color: #1a73e8; }
+        .crud-form label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .crud-form input[type="text"], .crud-form input[type="number"], .crud-form input[type="datetime-local"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; }
+        .form-actions { margin-top: 20px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Cold Chain Tracker Dashboard</h1>
-    <p>Welcome to your desktop UI that looks like a website!</p>
-    <button onclick="alert('✅ Connected to backend!')">Test Connection</button>
-  </div>
+    <div class="sidebar" id="sidebarNav">
+        <a href="#" onclick="showSection('shipments')" class="active">Shipments</a>
+        <a href="#" onclick="showSection('warehouses')">Warehouses</a>
+        </div>
+
+    <div class="main-content">
+        <p id="statusMessage">Status: Initializing...</p>
+
+        <div id="shipmentsSection" class="crud-section active">
+            <div class="container">
+                <h1>Shipments</h1>
+                <button onclick="fetchShipments()">Refresh Data</button>
+                <button onclick="showAddForm('shipment')">Add New Shipment</button> <input type="text" id="shipmentSearchInput" placeholder="Search Shipments..." onkeyup="filterTable('shipment')" style="margin-left: 10px; padding: 8px;">
+
+
+                <form id="shipmentForm" class="crud-form" onsubmit="event.preventDefault(); saveShipment();">
+                    <h2 id="shipmentFormTitle">Add New Shipment</h2>
+                    <input type="hidden" id="editShipmentId">
+                    <label for="shipment_batchId">Batch ID:</label>
+                    <input type="number" id="shipment_batchId" required>
+                    <label for="shipment_originWarehouseId">Origin Warehouse ID:</label>
+                    <input type="number" id="shipment_originWarehouseId" required>
+                    <label for="shipment_destinationWarehouseId">Destination Warehouse ID:</label>
+                    <input type="number" id="shipment_destinationWarehouseId" required>
+                    <label for="shipment_shipmentDate">Shipment Date:</label>
+                    <input type="datetime-local" id="shipment_shipmentDate">
+                    <label for="shipment_expectedDeliveryDate">Expected Delivery:</label>
+                    <input type="datetime-local" id="shipment_expectedDeliveryDate">
+                    <label for="shipment_actualDeliveryDate">Actual Delivery:</label>
+                    <input type="datetime-local" id="shipment_actualDeliveryDate">
+                    <label for="shipment_status">Status:</label>
+                    <input type="text" id="shipment_status">
+                    <div class="form-actions">
+                        <button type="submit">Save Shipment</button> <button onclick="hideForm('shipment')" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Shipment ID</th><th>Batch ID</th><th>Origin ID</th><th>Dest ID</th>
+                            <th>Ship Date</th><th>Expected Date</th><th>Actual Date</th><th>Status</th>
+                            <th>Created At</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipmentTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="warehousesSection" class="crud-section">
+             <div class="container">
+                <h1>Warehouses</h1>
+                <button onclick="fetchWarehouses()">Refresh Data</button>
+                <button onclick="showAddForm('warehouse')">Add New Warehouse</button> <input type="text" id="warehouseSearchInput" placeholder="Search Warehouses..." onkeyup="filterTable('warehouse')" style="margin-left: 10px; padding: 8px;">
+
+                 <form id="warehouseForm" class="crud-form" onsubmit="event.preventDefault(); saveWarehouse();">
+                    <h2 id="warehouseFormTitle">Add New Warehouse</h2>
+                    <input type="hidden" id="editWarehouseId">
+                    <label for="warehouse_name">Name:</label>
+                    <input type="text" id="warehouse_name" required>
+                    <label for="warehouse_location">Location:</label>
+                    <input type="text" id="warehouse_location" required>
+                    <div class="form-actions">
+                        <button type="submit">Save Warehouse</button> <button onclick="hideForm('warehouse')" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                 <table>
+                    <thead>
+                        <tr>
+                            <th>Warehouse ID</th><th>Name</th><th>Location</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="warehouseTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        </div>
+
+    <script>
+        // *** VERIFY THIS PORT NUMBER ***
+        const API_BASE_URL = 'http://localhost:8081/api'; // Or 8080, or 8082...
+        const statusP = document.getElementById('statusMessage');
+        const sidebarLinks = document.querySelectorAll('#sidebarNav a');
+
+        // --- Navigation ---
+        function showSection(sectionId) {
+             document.querySelectorAll('.crud-section').forEach(section => {
+                 section.classList.remove('active');
+             });
+             document.getElementById(sectionId + 'Section').classList.add('active');
+             sidebarLinks.forEach(link => link.classList.remove('active'));
+             document.querySelector(`#sidebarNav a[onclick="showSection('${sectionId}')"]`).classList.add('active');
+            
+             // Fetch data for the newly shown section
+             // *** CHANGED PLURAL TO SINGULAR FOR CONSISTENCY ***
+             if (sectionId === 'shipments') fetchShipments(); 
+             if (sectionId === 'warehouses') fetchWarehouses();
+             hideAllForms(); 
+        }
+
+        // *** CHANGED PARAMETER TO SINGULAR ***
+        function hideForm(type) { // e.g., type = 'shipment'
+             document.getElementById(type + 'Form').style.display = 'none'; // e.g., shipmentForm
+        }
+        function hideAllForms() {
+             document.querySelectorAll('.crud-form').forEach(f => f.style.display = 'none');
+        }
+        function hideAllFormsExcept(formIdToShow) {
+             document.querySelectorAll('.crud-form').forEach(f => {
+                 f.style.display = (f.id === formIdToShow) ? 'block' : 'none';
+             });
+         }
+
+        // --- Generic API Call Function ---
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            // ... (apiCall function remains the same) ...
+             const options = { method: method, headers: {} }; if (body) { options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(body); } statusP.textContent = `Status: ${method} ${API_BASE_URL}${endpoint}...`; try { const response = await fetch(`${API_BASE_URL}${endpoint}`, options); if (!response.ok) { const errorText = await response.text(); throw new Error(`${response.status} ${response.statusText || 'Error'}: ${errorText || 'No details'}`); } if (response.status === 204 || response.headers.get('content-length') === '0') { return null; } const data = await response.json(); console.log(`Data for ${method} ${endpoint}:`, data); return data; } catch (error) { console.error(`Error ${method} ${endpoint}:`, error); statusP.textContent = `Status: Error - ${error.message}`; throw error; }
+        }
+
+        // --- Date Formatting ---
+         function formatDateTime(dateTimeString) { /* Same */ if (!dateTimeString) return ''; try { const date = new Date(dateTimeString); return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }); } catch (e) { console.warn("Could not format date:", dateTimeString, e); return dateTimeString; } }
+         function formatDateTimeForInput(dateTimeString) { /* Same */ if (!dateTimeString) return ''; try { const date = new Date(dateTimeString); date.setMinutes(date.getMinutes() - date.getTimezoneOffset()); return date.toISOString().slice(0, 16); } catch (e) { console.warn("Could not format date for input:", dateTimeString, e); return ''; } }
+
+        // --- Shipment Functions ---
+        const shipmentTableBody = document.getElementById('shipmentTableBody');
+        const shipmentForm = document.getElementById('shipmentForm'); // Now gets the <form> element
+        const shipmentFormTitle = document.getElementById('shipmentFormTitle');
+        const editShipmentIdInput = document.getElementById('editShipmentId');
+
+        async function fetchShipments() { /* Mostly same, check apiCall */ 
+             shipmentTableBody.innerHTML = '<tr><td colspan="10">Loading...</td></tr>'; try { const data = await apiCall('/shipments'); shipmentTableBody.innerHTML = ''; if (!data || data.length === 0) { shipmentTableBody.innerHTML = '<tr><td colspan="10">No shipments found.</td></tr>'; } else { data.forEach(s => { const row = shipmentTableBody.insertRow(); row.innerHTML = `<td>${s.shipmentId}</td><td>${s.batchId}</td><td>${s.originWarehouseId}</td><td>${s.destinationWarehouseId}</td><td>${formatDateTime(s.shipmentDate)}</td><td>${formatDateTime(s.expectedDeliveryDate)}</td><td>${formatDateTime(s.actualDeliveryDate)}</td><td>${s.status || ''}</td><td>${formatDateTime(s.createdAt)}</td><td><button onclick="editShipment(${s.shipmentId})">Edit</button><button class="delete-btn" onclick="deleteShipment(${s.shipmentId})">Delete</button></td>`; }); } statusP.textContent = `Status: Loaded ${data ? data.length : 0} shipments.`; } catch (error) { shipmentTableBody.innerHTML = `<tr><td colspan="10">Error loading data. ${error.message}</td></tr>`; }
+        }
+
+        // *** CHANGED PARAMETER TO SINGULAR ***
+        function showAddForm(type) { // e.g., type = 'shipment'
+             const formElement = document.getElementById(type + 'Form'); // e.g., shipmentForm
+             const titleElement = document.getElementById(type + 'FormTitle'); // e.g., shipmentFormTitle
+             // *** CORRECTED ID INPUT SELECTION ***
+             const idInputElement = document.getElementById('edit' + type.charAt(0).toUpperCase() + type.slice(1) + 'Id'); // e.g., editShipmentId
+             
+             titleElement.textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+             if(idInputElement) idInputElement.value = ''; 
+             if(formElement) {
+                 formElement.reset(); // This now works on the <form> element
+                 formElement.style.display = 'block';
+                 hideAllFormsExcept(formElement.id); 
+             } else {
+                 console.error("Could not find form element for type:", type);
+             }
+        }
+        
+        async function editShipment(id) { /* Mostly same */ 
+             try { const shipment = await apiCall(`/shipments/${id}`); shipmentFormTitle.textContent = `Edit Shipment ID: ${id}`; editShipmentIdInput.value = id; document.getElementById('shipment_batchId').value = shipment.batchId; document.getElementById('shipment_originWarehouseId').value = shipment.originWarehouseId; document.getElementById('shipment_destinationWarehouseId').value = shipment.destinationWarehouseId; document.getElementById('shipment_shipmentDate').value = formatDateTimeForInput(shipment.shipmentDate); document.getElementById('shipment_expectedDeliveryDate').value = formatDateTimeForInput(shipment.expectedDeliveryDate); document.getElementById('shipment_actualDeliveryDate').value = formatDateTimeForInput(shipment.actualDeliveryDate); document.getElementById('shipment_status').value = shipment.status || ''; shipmentForm.style.display = 'block'; hideAllFormsExcept('shipmentForm'); statusP.textContent = `Status: Editing shipment ${id}.`; } catch (error) { /* Status set */ }
+        }
+
+        // ===================================================================
+        // === THIS FUNCTION IS THE ONLY PART THAT HAS CHANGED ===
+        // ===================================================================
+        async function saveShipment() {
+            const id = editShipmentIdInput.value;
+            const isEditing = !!id;
+
+            // This helper function gets the date and fixes the format for Java
+            const getSafeDate = (elementId) => {
+                const val = document.getElementById(elementId).value;
+                // This .replace() is the fix. It changes " " to "T"
+                return (val || '').replace(' ', 'T') || null; 
+            };
+
+            const shipmentData = {
+                batchId: parseInt(document.getElementById('shipment_batchId').value) || 0,
+                originWarehouseId: parseInt(document.getElementById('shipment_originWarehouseId').value) || 0,
+                destinationWarehouseId: parseInt(document.getElementById('shipment_destinationWarehouseId').value) || 0,
+                
+                // Use the new safe function to get and fix dates
+                shipmentDate: getSafeDate('shipment_shipmentDate'),
+                expectedDeliveryDate: getSafeDate('shipment_expectedDeliveryDate'),
+                actualDeliveryDate: getSafeDate('shipment_actualDeliveryDate'),
+                
+                status: document.getElementById('shipment_status').value || null
+            };
+
+            const endpoint = isEditing ? `/shipments/${id}` : '/shipments';
+            const method = isEditing ? 'PUT' : 'POST';
+            try {
+                const savedData = await apiCall(endpoint, method, shipmentData);
+                statusP.textContent = `Status: Shipment ${isEditing ? 'updated' : 'added'}!`;
+                hideForm('shipment');
+                fetchShipments();
+            } catch (error) {
+                // Status is set by apiCall
+            }
+        }
+        // ===================================================================
+        // === END OF CHANGED SECTION ===
+        // ===================================================================
+
+        async function deleteShipment(id) { /* Mostly same */
+            if (!confirm(`Delete Shipment ID: ${id}?`)) return; try { await apiCall(`/shipments/${id}`, 'DELETE'); statusP.textContent = `Status: Shipment ${id} deleted!`; fetchShipments(); } catch (error) { /* Status set */ }
+        }
+
+        // --- Warehouse Functions ---
+        const warehouseTableBody = document.getElementById('warehouseTableBody');
+        const warehouseForm = document.getElementById('warehouseForm'); // Now gets the <form> element
+        const warehouseFormTitle = document.getElementById('warehouseFormTitle');
+        const editWarehouseIdInput = document.getElementById('editWarehouseId');
+
+        async function fetchWarehouses() { /* Mostly same */
+             warehouseTableBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>'; try { const data = await apiCall('/warehouses'); warehouseTableBody.innerHTML = ''; if (!data || data.length === 0) { warehouseTableBody.innerHTML = '<tr><td colspan="4">No warehouses found.</td></tr>'; } else { data.forEach(w => { const row = warehouseTableBody.insertRow(); row.innerHTML = `<td>${w.warehouseId}</td><td>${w.name || ''}</td><td>${w.location || ''}</td><td><button onclick="editWarehouse(${w.warehouseId})">Edit</button><button class="delete-btn" onclick="deleteWarehouse(${w.warehouseId})">Delete</button></td>`; }); } statusP.textContent = `Status: Loaded ${data ? data.length : 0} warehouses.`; } catch (error) { warehouseTableBody.innerHTML = `<tr><td colspan="4">Error loading data. ${error.message}</td></tr>`; }
+        }
+        
+        async function editWarehouse(id) { /* Mostly same */
+             try { const warehouse = await apiCall(`/warehouses/${id}`); warehouseFormTitle.textContent = `Edit Warehouse ID: ${id}`; editWarehouseIdInput.value = id; document.getElementById('warehouse_name').value = warehouse.name || ''; document.getElementById('warehouse_location').value = warehouse.location || ''; warehouseForm.style.display = 'block'; hideAllFormsExcept('warehouseForm'); statusP.textContent = `Status: Editing warehouse ${id}.`; } catch (error) { /* Status set */ }
+        }
+
+        async function saveWarehouse() { /* Mostly same */
+             const id = editWarehouseIdInput.value; const isEditing = !!id; const warehouseData = { name: document.getElementById('warehouse_name').value || null, location: document.getElementById('warehouse_location').value || null }; const endpoint = isEditing ? `/warehouses/${id}` : '/warehouses'; const method = isEditing ? 'PUT' : 'POST'; try { const savedData = await apiCall(endpoint, method, warehouseData); statusP.textContent = `Status: Warehouse ${isEditing ? 'updated' : 'added'}!`; hideForm('warehouse'); fetchWarehouses(); } catch (error) { /* Status set */ }
+        }
+
+         async function deleteWarehouse(id) { /* Mostly same */
+             if (!confirm(`Delete Warehouse ID: ${id}?`)) return; try { await apiCall(`/warehouses/${id}`, 'DELETE'); statusP.textContent = `Status: Warehouse ${id} deleted!`; fetchWarehouses(); } catch (error) { /* Status set */ }
+         }
+         
+        // --- Filtering ---
+         function filterTable(type) { /* Same as before */ const inputId = type + 'SearchInput'; const tableBodyId = type + 'TableBody'; const filter = document.getElementById(inputId).value.toUpperCase(); const tableBody = document.getElementById(tableBodyId); const tr = tableBody.getElementsByTagName('tr'); for (let i = 0; i < tr.length; i++) { const row = tr[i]; const cells = row.getElementsByTagName('td'); let found = false; if (cells.length > 0) { for (let j = 0; j < cells.length - 1; j++) { const cell = cells[j]; if (cell) { const txtValue = cell.textContent || cell.innerText; if (txtValue.toUpperCase().indexOf(filter) > -1) { found = true; break; } } } } if (found || cells.length === 0 || row.textContent.includes("No") || row.textContent.includes("Loading")) { row.style.display = ""; } else { row.style.display = "none"; } } }
+
+
+        // --- Initial Load ---
+        showSection('shipments'); // Show shipments by default
+
+    </script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\controller\ShipmentController.java
+D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\controller\WarehouseController.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\CoreApplication.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\dao\AlertDao.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\dao\AuditLogDao.java
@@ -10,6 +12,8 @@ D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\m
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\model\TemperatureLog.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\model\User.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\model\Warehouse.java
+D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\repository\ShipmentRepository.java
+D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\repository\WarehouseRepository.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\service\TemperatureService.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\util\CsvImporter.java
 D:\Projects\Pharmaceutical Cold Chain Tracker\core\src\main\java\com\coldchain\util\DbUtil.java

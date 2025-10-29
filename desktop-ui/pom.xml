@@ -69,6 +69,10 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.coldchain.app.MainApp</mainClass>
+                    <options>
+                        <option>--add-exports</option>
+                        <option>javafx.web/com.sun.javafx.webkit=ALL-UNNAMED</option>
+                    </options>
                 </configuration>
             </plugin>
 

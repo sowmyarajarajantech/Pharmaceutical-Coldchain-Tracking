@@ -6,6 +6,7 @@ import com.coldchain.CoreApplication; // <-- IMPORTANT: See note below
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import javafx.application.Platform;
+
 // --- End of added tools ---
 
 import javafx.application.Application;
@@ -33,6 +34,9 @@ public class MainApp extends Application {
         try {
             // Your existing code to load the HTML UI is great.
             javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
+            // --- ADD THESE LINES TO ENABLE DEBUGGING ---
+            webView.setContextMenuEnabled(true); // Allows right-click menu
+            // --- END OF DEBUGGING CODE ---
 
             String htmlUrl = Objects.requireNonNull(
                 getClass().getResource("/com/coldchain/ui/index.html"),
@@ -40,6 +44,13 @@ public class MainApp extends Application {
             ).toExternalForm();
 
             webView.getEngine().load(htmlUrl);
+            // --- ADD THIS CODE FOR JS CONSOLE LOGGING ---
+            webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
+            // This makes console.log() messages appear in your Java terminal
+            com.sun.javafx.webkit.WebConsoleListener.setDefaultListener((view, message, lineNumber, sourceId) -> {
+                System.out.println("JS Console: [" + (sourceId != null ? sourceId : "unknown") + ":" + lineNumber + "] " + message);
+            });
+            // --- END OF LOGGING CODE ---
 
             javafx.scene.Scene scene = new javafx.scene.Scene(webView, 1280, 800);
             stage.setScene(scene);

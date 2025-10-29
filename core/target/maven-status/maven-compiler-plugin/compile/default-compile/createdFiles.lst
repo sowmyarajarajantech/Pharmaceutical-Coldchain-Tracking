@@ -3,11 +3,15 @@ com\coldchain\CoreApplication.class
 com\coldchain\dao\AlertDao.class
 com\coldchain\model\AuditLog.class
 com\coldchain\util\CsvImporter.class
+com\coldchain\controller\ShipmentController.class
+com\coldchain\repository\WarehouseRepository.class
 com\coldchain\model\Warehouse.class
 com\coldchain\model\Batch.class
 com\coldchain\model\User.class
 com\coldchain\dao\AuditLogDao.class
 com\coldchain\model\Role.class
+com\coldchain\repository\ShipmentRepository.class
+com\coldchain\controller\WarehouseController.class
 com\coldchain\service\TemperatureService.class
 com\coldchain\model\Shipment.class
 com\coldchain\util\DbUtil.class

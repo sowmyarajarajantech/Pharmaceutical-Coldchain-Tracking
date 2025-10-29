@@ -3,18 +3,30 @@ package com.coldchain.model;
 
 import java.time.LocalDateTime;
 
+// --- ADD THESE 4 IMPORTS ---
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+
+@Entity
 public class Shipment {
+
+    // --- ADD THESE 2 ANNOTATIONS ---
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int shipmentId;
+    
     private int batchId;
     private int originWarehouseId;
     private int destinationWarehouseId;
-    private LocalDateTime shipmentDate; // Corrected from departure_time
+    private LocalDateTime shipmentDate;
     private LocalDateTime expectedDeliveryDate;
     private LocalDateTime actualDeliveryDate;
     private String status;
     private LocalDateTime createdAt;
 
-    // Getters and Setters for all fields...
+    // Getters and Setters...
     public int getShipmentId() { return shipmentId; }
     public void setShipmentId(int shipmentId) { this.shipmentId = shipmentId; }
     public int getBatchId() { return batchId; }

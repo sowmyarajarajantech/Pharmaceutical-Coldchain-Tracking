@@ -1,21 +1,44 @@
-// File: core/src/main/java/com/coldchain/model/Warehouse.java
 package com.coldchain.model;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 
+@Entity
 public class Warehouse {
-    private int warehouseId;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer warehouseId; // Assuming Integer ID
+
     private String name;
     private String location;
-    private LocalDateTime createdAt;
+    // Add other fields as needed...
 
-    // Getters and Setters for all fields...
-    public int getWarehouseId() { return warehouseId; }
-    public void setWarehouseId(int warehouseId) { this.warehouseId = warehouseId; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    // --- Getters and Setters ---
+    public Integer getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Integer warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+    // Add getters/setters for other fields...
 }
