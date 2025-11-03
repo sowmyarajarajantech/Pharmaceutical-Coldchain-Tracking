@@ -1,35 +1,40 @@
-// File: core/src/main/java/com/coldchain/model/Batch.java
 package com.coldchain.model;
 
-import java.math.BigDecimal;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "Batches")
 public class Batch {
-    private int batchId;
-    private String productName;
-    private String manufacturer;
-    private LocalDate expiryDate;
-    private int quantity;
-    private BigDecimal requiredTemp; // Corrected from required_temp_max
-    private String status;
-    private LocalDateTime createdAt;
 
-    // Getters and Setters for all fields...
-    public int getBatchId() { return batchId; }
-    public void setBatchId(int batchId) { this.batchId = batchId; }
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
-    public String getManufacturer() { return manufacturer; }
-    public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
-    public LocalDate getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id; // Matches schema
+
+    private int product_id;
+    private String batch_no;
+    private LocalDate manufacture_date; // Use LocalDate for DATE type
+    private LocalDate expiry_date;
+    private int quantity;
+    private boolean is_expired;
+
+    // --- Getters and Setters ---
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public int getProduct_id() { return product_id; }
+    public void setProduct_id(int product_id) { this.product_id = product_id; }
+    public String getBatch_no() { return batch_no; }
+    public void setBatch_no(String batch_no) { this.batch_no = batch_no; }
+    public LocalDate getManufacture_date() { return manufacture_date; }
+    public void setManufacture_date(LocalDate mdate) { this.manufacture_date = mdate; }
+    public LocalDate getExpiry_date() { return expiry_date; }
+    public void setExpiry_date(LocalDate edate) { this.expiry_date = edate; }
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
-    public BigDecimal getRequiredTemp() { return requiredTemp; }
-    public void setRequiredTemp(BigDecimal requiredTemp) { this.requiredTemp = requiredTemp; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public boolean getIs_expired() { return is_expired; }
+    public void setIs_expired(boolean is_expired) { this.is_expired = is_expired; }
 }

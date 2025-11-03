@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // Allow frontend access
+@CrossOrigin(origins = "*")
 public class WarehouseController {
 
     private final WarehouseRepository warehouseRepository;
@@ -19,41 +19,35 @@ public class WarehouseController {
         this.warehouseRepository = warehouseRepository;
     }
 
-    // GET all warehouses
     @GetMapping("/warehouses")
     public List<Warehouse> getAllWarehouses() {
         return warehouseRepository.findAll();
     }
 
-    // GET warehouse by ID
     @GetMapping("/warehouses/{id}")
     public ResponseEntity<Warehouse> getWarehouseById(@PathVariable Integer id) {
         Optional<Warehouse> warehouse = warehouseRepository.findById(id);
         return warehouse.map(ResponseEntity::ok)
-                       .orElseGet(() -> ResponseEntity.notFound().build());
+                        .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // POST add new warehouse
     @PostMapping("/warehouses")
     public Warehouse addWarehouse(@RequestBody Warehouse newWarehouse) {
-        newWarehouse.setWarehouseId(null); // Ensure ID is null/0 for auto-generation
+        newWarehouse.setWh_id(0); 
         return warehouseRepository.save(newWarehouse);
     }
 
-    // PUT update warehouse
     @PutMapping("/warehouses/{id}")
     public ResponseEntity<Warehouse> updateWarehouse(@PathVariable Integer id, @RequestBody Warehouse updatedWarehouse) {
         return warehouseRepository.findById(id)
             .map(existingWarehouse -> {
-                updatedWarehouse.setWarehouseId(id); // Ensure ID is set correctly
-                // You might want more specific field updates here instead of saving the whole object
-                Warehouse saved = warehouseRepository.save(updatedWarehouse);
-                return ResponseEntity.ok(saved);
+                updatedWarehouse.setWh_id(id); // Use the correct setter
+                Warehouse savedWarehouse = warehouseRepository.save(updatedWarehouse);
+                return ResponseEntity.ok(savedWarehouse);
             })
             .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // DELETE warehouse
     @DeleteMapping("/warehouses/{id}")
     public ResponseEntity<?> deleteWarehouse(@PathVariable Integer id) {
         if (warehouseRepository.existsById(id)) {

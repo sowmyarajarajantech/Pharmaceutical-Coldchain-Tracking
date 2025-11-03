@@ -1,4 +1,5 @@
 package com.coldchain.controller;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,16 +18,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Enable CORS using the "corsConfigurationSource" bean
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
-            // 2. Disable CSRF protection (common for stateless REST APIs)
+            // 1. Disable CSRF (Fixes 403 Forbidden on POST/PUT/DELETE)
             .csrf(csrf -> csrf.disable())
             
-            // 3. Configure authorization rules
+            // 2. Enable CORS using the bean below
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // 3. Permit ALL requests to any endpoint
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**").permitAll() // Allow all requests to /api/
-                .anyRequest().authenticated()         // Secure any other endpoints
+                .anyRequest().permitAll()
             );
         
         return http.build();
@@ -36,14 +36,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow all origins (e.g., your file:/// origin)
-        configuration.setAllowedOrigins(Arrays.asList("*")); 
-        
-        // Allow all methods: GET, POST, PUT, DELETE, etc.
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        
-        // Allow all headers
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedOrigins(Arrays.asList("*")); // Allow all origins
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")); // Allow all methods
+        configuration.setAllowedHeaders(Arrays.asList("*")); // Allow all headers
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // Apply this config to all paths

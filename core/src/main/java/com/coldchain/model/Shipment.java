@@ -1,48 +1,49 @@
-// File: core/src/main/java/com/coldchain/model/Shipment.java
 package com.coldchain.model;
 
-import java.time.LocalDateTime;
-
-// --- ADD THESE 4 IMPORTS ---
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "Shipments")
 public class Shipment {
 
-    // --- ADD THESE 2 ANNOTATIONS ---
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int shipmentId;
-    
-    private int batchId;
-    private int originWarehouseId;
-    private int destinationWarehouseId;
-    private LocalDateTime shipmentDate;
-    private LocalDateTime expectedDeliveryDate;
-    private LocalDateTime actualDeliveryDate;
-    private String status;
-    private LocalDateTime createdAt;
+    private int id; // Matches 'id'
 
-    // Getters and Setters...
-    public int getShipmentId() { return shipmentId; }
-    public void setShipmentId(int shipmentId) { this.shipmentId = shipmentId; }
-    public int getBatchId() { return batchId; }
-    public void setBatchId(int batchId) { this.batchId = batchId; }
-    public int getOriginWarehouseId() { return originWarehouseId; }
-    public void setOriginWarehouseId(int originWarehouseId) { this.originWarehouseId = originWarehouseId; }
-    public int getDestinationWarehouseId() { return destinationWarehouseId; }
-    public void setDestinationWarehouseId(int destinationWarehouseId) { this.destinationWarehouseId = destinationWarehouseId; }
-    public LocalDateTime getShipmentDate() { return shipmentDate; }
-    public void setShipmentDate(LocalDateTime shipmentDate) { this.shipmentDate = shipmentDate; }
-    public LocalDateTime getExpectedDeliveryDate() { return expectedDeliveryDate; }
-    public void setExpectedDeliveryDate(LocalDateTime expectedDeliveryDate) { this.expectedDeliveryDate = expectedDeliveryDate; }
-    public LocalDateTime getActualDeliveryDate() { return actualDeliveryDate; }
-    public void setActualDeliveryDate(LocalDateTime actualDeliveryDate) { this.actualDeliveryDate = actualDeliveryDate; }
+    private String shipment_code;
+    private int batch_id;
+    private int from_warehouse;
+    private int to_warehouse;
+    private LocalDateTime shipped_at;
+    private LocalDateTime expected_delivery;
+    private LocalDateTime actual_delivery;
+    private String status;
+    private LocalDateTime created_at;
+
+    // --- Getters and Setters ---
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getShipment_code() { return shipment_code; }
+    public void setShipment_code(String shipment_code) { this.shipment_code = shipment_code; }
+    public int getBatch_id() { return batch_id; }
+    public void setBatch_id(int batch_id) { this.batch_id = batch_id; }
+    public int getFrom_warehouse() { return from_warehouse; }
+    public void setFrom_warehouse(int from_warehouse) { this.from_warehouse = from_warehouse; }
+    public int getTo_warehouse() { return to_warehouse; }
+    public void setTo_warehouse(int to_warehouse) { this.to_warehouse = to_warehouse; }
+    public LocalDateTime getShipped_at() { return shipped_at; }
+    public void setShipped_at(LocalDateTime shipped_at) { this.shipped_at = shipped_at; }
+    public LocalDateTime getExpected_delivery() { return expected_delivery; }
+    public void setExpected_delivery(LocalDateTime expected_delivery) { this.expected_delivery = expected_delivery; }
+    public LocalDateTime getActual_delivery() { return actual_delivery; }
+    public void setActual_delivery(LocalDateTime actual_delivery) { this.actual_delivery = actual_delivery; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreated_at() { return created_at; }
+    public void setCreated_at(LocalDateTime created_at) { this.created_at = created_at; }
 }

@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <title>Cold Chain Tracker - Admin</title>
     <style>
-        /* CSS styles remain the same as before */
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; color: #333; display: flex; height: 100vh; }
-        .sidebar { width: 200px; background: #343a40; color: white; padding-top: 20px; height: 100%; display: flex; flex-direction: column; }
+        .sidebar { width: 200px; background: #343a40; color: white; padding-top: 20px; height: 100%; display: flex; flex-direction: column; overflow-y: auto; }
         .sidebar a { color: #adb5bd; padding: 15px 20px; text-decoration: none; display: block; border-bottom: 1px solid #495057; }
         .sidebar a:hover, .sidebar a.active { background: #495057; color: white; }
         .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
@@ -26,7 +25,7 @@
         .crud-form { margin-top: 30px; padding: 20px; border: 1px solid #dee2e6; border-radius: 5px; background-color: #fdfdfd; display: none; }
         .crud-form h2 { margin-top: 0; color: #1a73e8; }
         .crud-form label { display: block; margin-bottom: 5px; font-weight: 500; }
-        .crud-form input[type="text"], .crud-form input[type="number"], .crud-form input[type="datetime-local"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; }
+        .crud-form input[type="text"], .crud-form input[type="number"], .crud-form input[type="datetime-local"], .crud-form input[type="date"], .crud-form input[type="password"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; }
         .form-actions { margin-top: 20px; }
     </style>
 </head>
@@ -34,7 +33,14 @@
     <div class="sidebar" id="sidebarNav">
         <a href="#" onclick="showSection('shipments')" class="active">Shipments</a>
         <a href="#" onclick="showSection('warehouses')">Warehouses</a>
-        </div>
+        <a href="#" onclick="showSection('products')">Products</a>
+        <a href="#" onclick="showSection('batches')">Batches</a>
+        <a href="#" onclick="showSection('users')">Users</a>
+        <a href="#" onclick="showSection('roles')">Roles</a>
+        <a href="#" onclick="showSection('temperaturelogs')">Temp Logs</a>
+        <a href="#" onclick="showSection('alerts')">Alerts</a>
+        <a href="#" onclick="showSection('auditlogs')">Audit Log</a>
+    </div>
 
     <div class="main-content">
         <p id="statusMessage">Status: Initializing...</p>
@@ -62,7 +68,7 @@
                     <label for="shipment_actualDeliveryDate">Actual Delivery:</label>
                     <input type="datetime-local" id="shipment_actualDeliveryDate">
                     <label for="shipment_status">Status:</label>
-                    <input type="text" id="shipment_status">
+                    <input type="text" id="shipment_status" placeholder="e.g., PENDING, IN_TRANSIT, DELIVERED">
                     <div class="form-actions">
                         <button type="submit">Save Shipment</button> <button onclick="hideForm('shipment')" type="button">Cancel</button>
                     </div>
@@ -92,7 +98,7 @@
                     <input type="hidden" id="editWarehouseId">
                     <label for="warehouse_name">Name:</label>
                     <input type="text" id="warehouse_name" required>
-                    <label for="warehouse_location">Location:</label>
+                    <label for="warehouse_location">Location (Address):</label>
                     <input type="text" id="warehouse_location" required>
                     <div class="form-actions">
                         <button type="submit">Save Warehouse</button> <button onclick="hideForm('warehouse')" type="button">Cancel</button>
@@ -109,15 +115,244 @@
                 </table>
             </div>
         </div>
+
+        <div id="productsSection" class="crud-section">
+            <div class="container">
+                <h1>Products</h1>
+                <button onclick="fetchProducts()">Refresh Data</button>
+                <button onclick="showAddForm('product')">Add New Product</button>
+                <input type="text" id="productSearchInput" placeholder="Search Products..." onkeyup="filterTable('product')" style="margin-left: 10px; padding: 8px;">
+
+                <form id="productForm" class="crud-form" onsubmit="event.preventDefault(); saveProduct();">
+                    <h2 id="productFormTitle">Add New Product</h2>
+                    <input type="hidden" id="editProductId">
+                    <label for="product_name">Name:</label>
+                    <input type="text" id="product_name" required>
+                    <label for="product_sku">SKU:</label>
+                    <input type="text" id="product_sku" required>
+                    <label for="product_manufacturer">Manufacturer:</label>
+                    <input type="text" id="product_manufacturer">
+                    <label for="product_required_temp_min">Min Temp (°C):</label>
+                    <input type="number" step="0.01" id="product_required_temp_min">
+                    <label for="product_required_temp_max">Max Temp (°C):</label>
+                    <input type="number" step="0.01" id="product_required_temp_max">
+                    <label for="product_description">Description:</label>
+                    <input type="text" id="product_description">
+                    <div class="form-actions">
+                        <button type="submit">Save Product</button>
+                        <button onclick="hideForm('product')" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>SKU</th>
+                            <th>Name</th>
+                            <th>Manufacturer</th>
+                            <th>Min Temp</th>
+                            <th>Max Temp</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
-    <script>
-        // *** VERIFY THIS PORT NUMBER ***
-        const API_BASE_URL = 'http://localhost:8081/api'; // Or 8080, or 8082...
+        <div id="batchesSection" class="crud-section">
+            <div class="container">
+                <h1>Batches</h1>
+                <button onclick="fetchBatches()">Refresh Data</button>
+                <button onclick="showAddForm('batch')">Add New Batch</button>
+                <input type="text" id="batchSearchInput" placeholder="Search Batches..." onkeyup="filterTable('batch')" style="margin-left: 10px; padding: 8px;">
+
+                <form id="batchForm" class="crud-form" onsubmit="event.preventDefault(); saveBatch();">
+                    <h2 id="batchFormTitle">Add New Batch</h2>
+                    <input type="hidden" id="editBatchId">
+                    <label for="batch_product_id">Product ID:</label>
+                    <input type="number" id="batch_product_id" required>
+                    <label for="batch_batch_no">Batch No:</label>
+                    <input type="text" id="batch_batch_no" required>
+                    <label for="batch_manufacture_date">Manufacture Date:</label>
+                    <input type="date" id="batch_manufacture_date">
+                    <label for="batch_expiry_date">Expiry Date:</label>
+                    <input type="date" id="batch_expiry_date">
+                    <label for="batch_quantity">Quantity:</label>
+                    <input type="number" id="batch_quantity">
+                    <div class="form-actions">
+                        <button type="submit">Save Batch</button>
+                        <button onclick="hideForm('batch')" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product ID</th>
+                            <th>Batch No</th>
+                            <th>Mfg. Date</th>
+                            <th>Expiry Date</th>
+                            <th>Qty</th>
+                            <th>Expired?</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batchTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="usersSection" class="crud-section">
+            <div class="container">
+                <h1>Users</h1>
+                <button onclick="fetchUsers()">Refresh Data</button>
+                <button onclick="showAddForm('user')">Add New User</button>
+                <input type="text" id="userSearchInput" placeholder="Search Users..." onkeyup="filterTable('user')" style="margin-left: 10px; padding: 8px;">
+
+                <form id="userForm" class="crud-form" onsubmit="event.preventDefault(); saveUser();">
+                    <h2 id="userFormTitle">Add New User</h2>
+                    <input type="hidden" id="editUserId">
+                    <label for="user_username">Username:</label>
+                    <input type="text" id="user_username" required>
+                    <label for="user_full_name">Full Name:</label>
+                    <input type="text" id="user_full_name">
+                    <label for="user_email">Email:</label>
+                    <input type="text" id="user_email">
+                    <label for="user_password_hash">Password:</label>
+                    <input type="password" id="user_password_hash" placeholder="Leave blank to keep unchanged on edit">
+                    <label for="user_role_id">Role ID:</label>
+                    <input type="number" id="user_role_id" required>
+                    <div class="form-actions">
+                        <button type="submit">Save User</button>
+                        <button onclick="hideForm('user')" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="rolesSection" class="crud-section">
+            <div class="container">
+                <h1>Roles</h1>
+                <button onclick="fetchRoles()">Refresh Data</button>
+                <button onclick="showAddForm('role')">Add New Role</button>
+                <input type="text" id="roleSearchInput" placeholder="Search Roles..." onkeyup="filterTable('role')" style="margin-left: 10px; padding: 8px;">
+
+                <form id="roleForm" class="crud-form" onsubmit="event.preventDefault(); saveRole();">
+                    <h2 id="roleFormTitle">Add New Role</h2>
+                    <input type="hidden" id="editRoleId">
+                    <label for="role_role_name">Role Name:</label>
+                    <input type="text" id="role_role_name" required>
+                    <label for="role_description">Description:</label>
+                    <input type="text" id="role_description">
+                    <div class="form-actions">
+                        <button type="submit">Save Role</button>
+                        <button onclick="hideForm('role')" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Role Name</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roleTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="temperaturelogsSection" class="crud-section">
+            <div class="container">
+                <h1>Temperature Logs (Read-Only)</h1>
+                <button onclick="fetchTemperatureLogs()">Refresh Data</button>
+                <input type="text" id="temperaturelogSearchInput" placeholder="Search Logs..." onkeyup="filterTable('temperaturelog')" style="margin-left: 10px; padding: 8px;">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>Shipment ID</th>
+                            <th>Temperature</th>
+                            <th>Recorded By</th>
+                            <th>Recorded At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="temperaturelogTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="alertsSection" class="crud-section">
+            <div class="container">
+                <h1>Alerts (Read-Only)</h1>
+                <button onclick="fetchAlerts()">Refresh Data</button>
+                <input type="text" id="alertSearchInput" placeholder="Search Alerts..." onkeyup="filterTable('alert')" style="margin-left: 10px; padding: 8px;">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Alert ID</th>
+                            <th>Shipment ID</th>
+                            <th>Type</th>
+                            <th>Severity</th>
+                            <th>Message</th>
+                            <th>Temp</th>
+                            <th>Ack. By</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="auditlogsSection" class="crud-section">
+            <div class="container">
+                <h1>Audit Log (Read-Only)</h1>
+                <button onclick="fetchAuditLogs()">Refresh Data</button>
+                <input type="text" id="auditlogSearchInput" placeholder="Search Audit..." onkeyup="filterTable('auditlog')" style="margin-left: 10px; padding: 8px;">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>User ID</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditlogTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div> <script>
+        const API_BASE_URL = 'http://localhost:8081/api';
         const statusP = document.getElementById('statusMessage');
         const sidebarLinks = document.querySelectorAll('#sidebarNav a');
 
-        // --- Navigation ---
+     
         function showSection(sectionId) {
              document.querySelectorAll('.crud-section').forEach(section => {
                  section.classList.remove('active');
@@ -126,16 +361,22 @@
              sidebarLinks.forEach(link => link.classList.remove('active'));
              document.querySelector(`#sidebarNav a[onclick="showSection('${sectionId}')"]`).classList.add('active');
             
-             // Fetch data for the newly shown section
-             // *** CHANGED PLURAL TO SINGULAR FOR CONSISTENCY ***
              if (sectionId === 'shipments') fetchShipments(); 
              if (sectionId === 'warehouses') fetchWarehouses();
+             if (sectionId === 'products') fetchProducts(); 
+             if (sectionId === 'batches') fetchBatches(); 
+             if (sectionId === 'users') fetchUsers(); 
+             if (sectionId === 'roles') fetchRoles(); 
+             if (sectionId === 'temperaturelogs') fetchTemperatureLogs(); 
+             if (sectionId === 'alerts') fetchAlerts(); 
+             if (sectionId === 'auditlogs') fetchAuditLogs(); 
+             
              hideAllForms(); 
         }
 
-        // *** CHANGED PARAMETER TO SINGULAR ***
-        function hideForm(type) { // e.g., type = 'shipment'
-             document.getElementById(type + 'Form').style.display = 'none'; // e.g., shipmentForm
+        function hideForm(type) {
+             const form = document.getElementById(type + 'Form');
+             if (form) form.style.display = 'none';
         }
         function hideAllForms() {
              document.querySelectorAll('.crud-form').forEach(f => f.style.display = 'none');
@@ -146,37 +387,94 @@
              });
          }
 
-        // --- Generic API Call Function ---
+
         async function apiCall(endpoint, method = 'GET', body = null) {
-            // ... (apiCall function remains the same) ...
-             const options = { method: method, headers: {} }; if (body) { options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(body); } statusP.textContent = `Status: ${method} ${API_BASE_URL}${endpoint}...`; try { const response = await fetch(`${API_BASE_URL}${endpoint}`, options); if (!response.ok) { const errorText = await response.text(); throw new Error(`${response.status} ${response.statusText || 'Error'}: ${errorText || 'No details'}`); } if (response.status === 204 || response.headers.get('content-length') === '0') { return null; } const data = await response.json(); console.log(`Data for ${method} ${endpoint}:`, data); return data; } catch (error) { console.error(`Error ${method} ${endpoint}:`, error); statusP.textContent = `Status: Error - ${error.message}`; throw error; }
+             const options = { method: method, headers: {} };
+             if (body) {
+                 options.headers['Content-Type'] = 'application/json';
+                 options.body = JSON.stringify(body);
+             }
+             statusP.textContent = `Status: ${method} ${API_BASE_URL}${endpoint}...`;
+             try {
+                 const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                 if (!response.ok) {
+                     const errorText = await response.text();
+                     throw new Error(`${response.status} ${response.statusText || 'Error'}: ${errorText || 'No details'}`);
+                 }
+                 if (response.status === 204 || response.headers.get('content-length') === '0') {
+                     return null; 
+                 }
+                 return await response.json();
+             } catch (error) {
+                 console.error(`Error ${method} ${endpoint}:`, error);
+                 statusP.textContent = `Status: Error - ${error.message}`;
+                 throw error;
+             }
         }
 
-        // --- Date Formatting ---
-         function formatDateTime(dateTimeString) { /* Same */ if (!dateTimeString) return ''; try { const date = new Date(dateTimeString); return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }); } catch (e) { console.warn("Could not format date:", dateTimeString, e); return dateTimeString; } }
-         function formatDateTimeForInput(dateTimeString) { /* Same */ if (!dateTimeString) return ''; try { const date = new Date(dateTimeString); date.setMinutes(date.getMinutes() - date.getTimezoneOffset()); return date.toISOString().slice(0, 16); } catch (e) { console.warn("Could not format date for input:", dateTimeString, e); return ''; } }
+         function formatDateTime(dateTimeString) {
+             if (!dateTimeString) return 'N/A';
+             try {
+                 const date = new Date(dateTimeString);
+                 return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+             } catch (e) { return dateTimeString; }
+         }
+         function formatDateTimeForInput(dateTimeString) {
+             if (!dateTimeString) return '';
+             try {
+                 const date = new Date(dateTimeString);
+                 date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                 return date.toISOString().slice(0, 16);
+             } catch (e) { return ''; }
+         }
 
-        // --- Shipment Functions ---
+      
         const shipmentTableBody = document.getElementById('shipmentTableBody');
-        const shipmentForm = document.getElementById('shipmentForm'); // Now gets the <form> element
+        const shipmentForm = document.getElementById('shipmentForm');
         const shipmentFormTitle = document.getElementById('shipmentFormTitle');
         const editShipmentIdInput = document.getElementById('editShipmentId');
 
-        async function fetchShipments() { /* Mostly same, check apiCall */ 
-             shipmentTableBody.innerHTML = '<tr><td colspan="10">Loading...</td></tr>'; try { const data = await apiCall('/shipments'); shipmentTableBody.innerHTML = ''; if (!data || data.length === 0) { shipmentTableBody.innerHTML = '<tr><td colspan="10">No shipments found.</td></tr>'; } else { data.forEach(s => { const row = shipmentTableBody.insertRow(); row.innerHTML = `<td>${s.shipmentId}</td><td>${s.batchId}</td><td>${s.originWarehouseId}</td><td>${s.destinationWarehouseId}</td><td>${formatDateTime(s.shipmentDate)}</td><td>${formatDateTime(s.expectedDeliveryDate)}</td><td>${formatDateTime(s.actualDeliveryDate)}</td><td>${s.status || ''}</td><td>${formatDateTime(s.createdAt)}</td><td><button onclick="editShipment(${s.shipmentId})">Edit</button><button class="delete-btn" onclick="deleteShipment(${s.shipmentId})">Delete</button></td>`; }); } statusP.textContent = `Status: Loaded ${data ? data.length : 0} shipments.`; } catch (error) { shipmentTableBody.innerHTML = `<tr><td colspan="10">Error loading data. ${error.message}</td></tr>`; }
+        async function fetchShipments() {
+             shipmentTableBody.innerHTML = '<tr><td colspan="10">Loading...</td></tr>';
+             try {
+                 const data = await apiCall('/shipments');
+                 shipmentTableBody.innerHTML = '';
+                 if (!data || data.length === 0) {
+                     shipmentTableBody.innerHTML = '<tr><td colspan="10">No shipments found.</td></tr>';
+                 } else {
+                     data.forEach(s => {
+                         const row = shipmentTableBody.insertRow();
+                         row.innerHTML = `
+                            <td>${s.id}</td>
+                            <td>${s.batch_id}</td>
+                            <td>${s.from_warehouse}</td>
+                            <td>${s.to_warehouse}</td>
+                            <td>${formatDateTime(s.shipped_at)}</td>
+                            <td>${formatDateTime(s.expected_delivery)}</td>
+                            <td>${formatDateTime(s.actual_delivery)}</td>
+                            <td>${s.status || ''}</td>
+                            <td>${formatDateTime(s.created_at)}</td>
+                            <td>
+                                <button onclick="editShipment(${s.id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteShipment(${s.id})">Delete</button>
+                            </td>`;
+                     });
+                 }
+                 statusP.textContent = `Status: Loaded ${data ? data.length : 0} shipments.`;
+             } catch (error) {
+                 shipmentTableBody.innerHTML = `<tr><td colspan="10">Error loading data. ${error.message}</td></tr>`;
+             }
         }
-
-        // *** CHANGED PARAMETER TO SINGULAR ***
-        function showAddForm(type) { // e.g., type = 'shipment'
-             const formElement = document.getElementById(type + 'Form'); // e.g., shipmentForm
-             const titleElement = document.getElementById(type + 'FormTitle'); // e.g., shipmentFormTitle
-             // *** CORRECTED ID INPUT SELECTION ***
-             const idInputElement = document.getElementById('edit' + type.charAt(0).toUpperCase() + type.slice(1) + 'Id'); // e.g., editShipmentId
+        
+        function showAddForm(type) {
+             const formElement = document.getElementById(type + 'Form');
+             const titleElement = document.getElementById(type + 'FormTitle');
+             const idInputElement = document.getElementById('edit' + type.charAt(0).toUpperCase() + type.slice(1) + 'Id');
              
              titleElement.textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
              if(idInputElement) idInputElement.value = ''; 
              if(formElement) {
-                 formElement.reset(); // This now works on the <form> element
+                 formElement.reset();
                  formElement.style.display = 'block';
                  hideAllFormsExcept(formElement.id); 
              } else {
@@ -184,81 +482,588 @@
              }
         }
         
-        async function editShipment(id) { /* Mostly same */ 
-             try { const shipment = await apiCall(`/shipments/${id}`); shipmentFormTitle.textContent = `Edit Shipment ID: ${id}`; editShipmentIdInput.value = id; document.getElementById('shipment_batchId').value = shipment.batchId; document.getElementById('shipment_originWarehouseId').value = shipment.originWarehouseId; document.getElementById('shipment_destinationWarehouseId').value = shipment.destinationWarehouseId; document.getElementById('shipment_shipmentDate').value = formatDateTimeForInput(shipment.shipmentDate); document.getElementById('shipment_expectedDeliveryDate').value = formatDateTimeForInput(shipment.expectedDeliveryDate); document.getElementById('shipment_actualDeliveryDate').value = formatDateTimeForInput(shipment.actualDeliveryDate); document.getElementById('shipment_status').value = shipment.status || ''; shipmentForm.style.display = 'block'; hideAllFormsExcept('shipmentForm'); statusP.textContent = `Status: Editing shipment ${id}.`; } catch (error) { /* Status set */ }
+        async function editShipment(id) { 
+             try { 
+                 const shipment = await apiCall(`/shipments/${id}`);
+                 shipmentFormTitle.textContent = `Edit Shipment ID: ${id}`; 
+                 editShipmentIdInput.value = id;
+                 
+                 document.getElementById('shipment_batchId').value = shipment.batch_id; 
+                 document.getElementById('shipment_originWarehouseId').value = shipment.from_warehouse; 
+                 document.getElementById('shipment_destinationWarehouseId').value = shipment.to_warehouse;
+                 document.getElementById('shipment_shipmentDate').value = formatDateTimeForInput(shipment.shipped_at); 
+                 document.getElementById('shipment_expectedDeliveryDate').value = formatDateTimeForInput(shipment.expected_delivery);
+                 document.getElementById('shipment_actualDeliveryDate').value = formatDateTimeForInput(shipment.actual_delivery);
+                 document.getElementById('shipment_status').value = shipment.status || ''; 
+                 
+                 shipmentForm.style.display = 'block'; 
+                 hideAllFormsExcept('shipmentForm'); 
+                 statusP.textContent = `Status: Editing shipment ${id}.`;
+            } catch (error) { /* Status set */ }
         }
 
-        // ===================================================================
-        // === THIS FUNCTION IS THE ONLY PART THAT HAS CHANGED ===
-        // ===================================================================
         async function saveShipment() {
             const id = editShipmentIdInput.value;
             const isEditing = !!id;
 
-            // This helper function gets the date and fixes the format for Java
             const getSafeDate = (elementId) => {
                 const val = document.getElementById(elementId).value;
-                // This .replace() is the fix. It changes " " to "T"
                 return (val || '').replace(' ', 'T') || null; 
             };
-
+            
             const shipmentData = {
-                batchId: parseInt(document.getElementById('shipment_batchId').value) || 0,
-                originWarehouseId: parseInt(document.getElementById('shipment_originWarehouseId').value) || 0,
-                destinationWarehouseId: parseInt(document.getElementById('shipment_destinationWarehouseId').value) || 0,
-                
-                // Use the new safe function to get and fix dates
-                shipmentDate: getSafeDate('shipment_shipmentDate'),
-                expectedDeliveryDate: getSafeDate('shipment_expectedDeliveryDate'),
-                actualDeliveryDate: getSafeDate('shipment_actualDeliveryDate'),
-                
+                batch_id: parseInt(document.getElementById('shipment_batchId').value) || 0,
+                from_warehouse: parseInt(document.getElementById('shipment_originWarehouseId').value) || 0,
+                to_warehouse: parseInt(document.getElementById('shipment_destinationWarehouseId').value) || 0,
+                shipped_at: getSafeDate('shipment_shipmentDate'),
+                expected_delivery: getSafeDate('shipment_expectedDeliveryDate'),
+                actual_delivery: getSafeDate('shipment_actualDeliveryDate'),
                 status: document.getElementById('shipment_status').value || null
             };
 
             const endpoint = isEditing ? `/shipments/${id}` : '/shipments';
             const method = isEditing ? 'PUT' : 'POST';
             try {
-                const savedData = await apiCall(endpoint, method, shipmentData);
+                await apiCall(endpoint, method, shipmentData);
                 statusP.textContent = `Status: Shipment ${isEditing ? 'updated' : 'added'}!`;
                 hideForm('shipment');
                 fetchShipments();
-            } catch (error) {
-                // Status is set by apiCall
-            }
-        }
-        // ===================================================================
-        // === END OF CHANGED SECTION ===
-        // ===================================================================
-
-        async function deleteShipment(id) { /* Mostly same */
-            if (!confirm(`Delete Shipment ID: ${id}?`)) return; try { await apiCall(`/shipments/${id}`, 'DELETE'); statusP.textContent = `Status: Shipment ${id} deleted!`; fetchShipments(); } catch (error) { /* Status set */ }
+            } catch (error) { /* Status set */ }
         }
 
-        // --- Warehouse Functions ---
+        async function deleteShipment(id) {
+            if (!confirm(`Delete Shipment ID: ${id}?`)) return;
+            try {
+                await apiCall(`/shipments/${id}`, 'DELETE');
+                statusP.textContent = `Status: Shipment ${id} deleted!`;
+                fetchShipments();
+            } catch (error) { /* Status set */ }
+        }
+
+        // --- Warehouse Functions (FIXED) ---
         const warehouseTableBody = document.getElementById('warehouseTableBody');
-        const warehouseForm = document.getElementById('warehouseForm'); // Now gets the <form> element
+        const warehouseForm = document.getElementById('warehouseForm');
         const warehouseFormTitle = document.getElementById('warehouseFormTitle');
         const editWarehouseIdInput = document.getElementById('editWarehouseId');
 
-        async function fetchWarehouses() { /* Mostly same */
-             warehouseTableBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>'; try { const data = await apiCall('/warehouses'); warehouseTableBody.innerHTML = ''; if (!data || data.length === 0) { warehouseTableBody.innerHTML = '<tr><td colspan="4">No warehouses found.</td></tr>'; } else { data.forEach(w => { const row = warehouseTableBody.insertRow(); row.innerHTML = `<td>${w.warehouseId}</td><td>${w.name || ''}</td><td>${w.location || ''}</td><td><button onclick="editWarehouse(${w.warehouseId})">Edit</button><button class="delete-btn" onclick="deleteWarehouse(${w.warehouseId})">Delete</button></td>`; }); } statusP.textContent = `Status: Loaded ${data ? data.length : 0} warehouses.`; } catch (error) { warehouseTableBody.innerHTML = `<tr><td colspan="4">Error loading data. ${error.message}</td></tr>`; }
+        async function fetchWarehouses() {
+             warehouseTableBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+             try {
+                 const data = await apiCall('/warehouses');
+                 warehouseTableBody.innerHTML = '';
+                 if (!data || data.length === 0) {
+                     warehouseTableBody.innerHTML = '<tr><td colspan="4">No warehouses found.</td></tr>';
+                 } else {
+                     data.forEach(w => {
+                         const row = warehouseTableBody.insertRow();
+                         row.innerHTML = `
+                            <td>${w.wh_id}</td>
+                            <td>${w.wh_name || ''}</td>
+                            <td>${w.address || ''}</td>
+                            <td>
+                                <button onclick="editWarehouse(${w.wh_id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteWarehouse(${w.wh_id})">Delete</button>
+                            </td>`;
+                     });
+                 }
+                 statusP.textContent = `Status: Loaded ${data ? data.length : 0} warehouses.`;
+             } catch (error) {
+                 warehouseTableBody.innerHTML = `<tr><td colspan="4">Error loading data. ${error.message}</td></tr>`;
+             }
         }
         
-        async function editWarehouse(id) { /* Mostly same */
-             try { const warehouse = await apiCall(`/warehouses/${id}`); warehouseFormTitle.textContent = `Edit Warehouse ID: ${id}`; editWarehouseIdInput.value = id; document.getElementById('warehouse_name').value = warehouse.name || ''; document.getElementById('warehouse_location').value = warehouse.location || ''; warehouseForm.style.display = 'block'; hideAllFormsExcept('warehouseForm'); statusP.textContent = `Status: Editing warehouse ${id}.`; } catch (error) { /* Status set */ }
+        async function editWarehouse(id) {
+             try {
+                 const warehouse = await apiCall(`/warehouses/${id}`);
+                 warehouseFormTitle.textContent = `Edit Warehouse ID: ${id}`;
+                 editWarehouseIdInput.value = id;
+                 document.getElementById('warehouse_name').value = warehouse.wh_name || '';
+                 document.getElementById('warehouse_location').value = warehouse.address || '';
+                 warehouseForm.style.display = 'block';
+                 hideAllFormsExcept('warehouseForm');
+                 statusP.textContent = `Status: Editing warehouse ${id}.`;
+             } catch (error) { /* Status set */ }
         }
 
-        async function saveWarehouse() { /* Mostly same */
-             const id = editWarehouseIdInput.value; const isEditing = !!id; const warehouseData = { name: document.getElementById('warehouse_name').value || null, location: document.getElementById('warehouse_location').value || null }; const endpoint = isEditing ? `/warehouses/${id}` : '/warehouses'; const method = isEditing ? 'PUT' : 'POST'; try { const savedData = await apiCall(endpoint, method, warehouseData); statusP.textContent = `Status: Warehouse ${isEditing ? 'updated' : 'added'}!`; hideForm('warehouse'); fetchWarehouses(); } catch (error) { /* Status set */ }
+        async function saveWarehouse() {
+             const id = editWarehouseIdInput.value;
+             const isEditing = !!id;
+             const warehouseData = {
+                 wh_name: document.getElementById('warehouse_name').value || null,
+                 address: document.getElementById('warehouse_location').value || null
+             };
+             const endpoint = isEditing ? `/warehouses/${id}` : '/warehouses';
+             const method = isEditing ? 'PUT' : 'POST';
+             try {
+                 await apiCall(endpoint, method, warehouseData);
+                 statusP.textContent = `Status: Warehouse ${isEditing ? 'updated' : 'added'}!`;
+                 hideForm('warehouse');
+                 fetchWarehouses();
+             } catch (error) { /* Status set */ }
         }
 
-         async function deleteWarehouse(id) { /* Mostly same */
-             if (!confirm(`Delete Warehouse ID: ${id}?`)) return; try { await apiCall(`/warehouses/${id}`, 'DELETE'); statusP.textContent = `Status: Warehouse ${id} deleted!`; fetchWarehouses(); } catch (error) { /* Status set */ }
+         async function deleteWarehouse(id) {
+             if (!confirm(`Delete Warehouse ID: ${id}?`)) return;
+             try {
+                 await apiCall(`/warehouses/${id}`, 'DELETE');
+                 statusP.textContent = `Status: Warehouse ${id} deleted!`;
+                 fetchWarehouses();
+             } catch (error) { /* Status set */ }
          }
          
-        // --- Filtering ---
-         function filterTable(type) { /* Same as before */ const inputId = type + 'SearchInput'; const tableBodyId = type + 'TableBody'; const filter = document.getElementById(inputId).value.toUpperCase(); const tableBody = document.getElementById(tableBodyId); const tr = tableBody.getElementsByTagName('tr'); for (let i = 0; i < tr.length; i++) { const row = tr[i]; const cells = row.getElementsByTagName('td'); let found = false; if (cells.length > 0) { for (let j = 0; j < cells.length - 1; j++) { const cell = cells[j]; if (cell) { const txtValue = cell.textContent || cell.innerText; if (txtValue.toUpperCase().indexOf(filter) > -1) { found = true; break; } } } } if (found || cells.length === 0 || row.textContent.includes("No") || row.textContent.includes("Loading")) { row.style.display = ""; } else { row.style.display = "none"; } } }
+        // --- Product Functions ---
+        const productTableBody = document.getElementById('productTableBody');
+        const productForm = document.getElementById('productForm');
+        const productFormTitle = document.getElementById('productFormTitle');
+        const editProductIdInput = document.getElementById('editProductId');
 
+        async function fetchProducts() {
+            productTableBody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+            try {
+                const data = await apiCall('/products');
+                productTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    productTableBody.innerHTML = '<tr><td colspan="7">No products found.</td></tr>';
+                } else {
+                    data.forEach(p => {
+                        const row = productTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${p.id}</td>
+                            <td>${p.sku || ''}</td>
+                            <td>${p.name || ''}</td>
+                            <td>${p.manufacturer || ''}</td>
+                            <td>${p.required_temp_min || 'N/A'}</td>
+                            <td>${p.required_temp_max || 'N/A'}</td>
+                            <td>
+                                <button onclick="editProduct(${p.id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
+                            </td>`;
+                    });
+                }
+                statusP.textContent = `Status: Loaded ${data ? data.length : 0} products.`;
+            } catch (error) {
+                productTableBody.innerHTML = `<tr><td colspan="7">Error loading data. ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function editProduct(id) {
+            try {
+                const product = await apiCall(`/products/${id}`);
+                productFormTitle.textContent = `Edit Product ID: ${id}`;
+                editProductIdInput.value = id;
+                document.getElementById('product_name').value = product.name || '';
+                document.getElementById('product_sku').value = product.sku || '';
+                document.getElementById('product_manufacturer').value = product.manufacturer || '';
+                document.getElementById('product_required_temp_min').value = product.required_temp_min || '';
+                document.getElementById('product_required_temp_max').value = product.required_temp_max || '';
+                document.getElementById('product_description').value = product.description || '';
+                
+                productForm.style.display = 'block';
+                hideAllFormsExcept('productForm');
+                statusP.textContent = `Status: Editing product ${id}.`;
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+        async function saveProduct() {
+            const id = editProductIdInput.value;
+            const isEditing = !!id;
+            const productData = {
+                name: document.getElementById('product_name').value || null,
+                sku: document.getElementById('product_sku').value || null,
+                manufacturer: document.getElementById('product_manufacturer').value || null,
+                description: document.getElementById('product_description').value || null,
+                required_temp_min: parseFloat(document.getElementById('product_required_temp_min').value) || null,
+                required_temp_max: parseFloat(document.getElementById('product_required_temp_max').value) || null
+            };
+
+            const endpoint = isEditing ? `/products/${id}` : '/products';
+            const method = isEditing ? 'PUT' : 'POST';
+            try {
+                await apiCall(endpoint, method, productData);
+                statusP.textContent = `Status: Product ${isEditing ? 'updated' : 'added'}!`;
+                hideForm('product');
+                fetchProducts();
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+         async function deleteProduct(id) {
+            if (!confirm(`Delete Product ID: ${id}?`)) return;
+            try {
+                await apiCall(`/products/${id}`, 'DELETE');
+                statusP.textContent = `Status: Product ${id} deleted!`;
+                fetchProducts();
+            } catch (error) { /* Status set by apiCall */ }
+         }
+
+        // --- Batch Functions ---
+        const batchTableBody = document.getElementById('batchTableBody');
+        const batchForm = document.getElementById('batchForm');
+        const batchFormTitle = document.getElementById('batchFormTitle');
+        const editBatchIdInput = document.getElementById('editBatchId');
+
+        async function fetchBatches() {
+            batchTableBody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
+            try {
+                const data = await apiCall('/batches');
+                batchTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    batchTableBody.innerHTML = '<tr><td colspan="8">No batches found.</td></tr>';
+                } else {
+                    data.forEach(b => {
+                        const row = batchTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${b.id}</td>
+                            <td>${b.product_id}</td>
+                            <td>${b.batch_no || ''}</td>
+                            <td>${b.manufacture_date || ''}</td>
+                            <td>${b.expiry_date || ''}</td>
+                            <td>${b.quantity}</td>
+                            <td>${b.is_expired ? 'Yes' : 'No'}</td>
+                            <td>
+                                <button onclick="editBatch(${b.id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteBatch(${b.id})">Delete</button>
+                            </td>`;
+                    });
+                }
+                statusP.textContent = `Status: Loaded ${data ? data.length : 0} batches.`;
+            } catch (error) {
+                batchTableBody.innerHTML = `<tr><td colspan="8">Error loading data. ${error.message}</td></tr>`;
+            }
+        }
+
+        async function editBatch(id) {
+            try {
+                const batch = await apiCall(`/batches/${id}`);
+                batchFormTitle.textContent = `Edit Batch ID: ${id}`;
+                editBatchIdInput.value = id;
+                document.getElementById('batch_product_id').value = batch.product_id;
+                document.getElementById('batch_batch_no').value = batch.batch_no || '';
+                document.getElementById('batch_manufacture_date').value = batch.manufacture_date;
+                document.getElementById('batch_expiry_date').value = batch.expiry_date;
+                document.getElementById('batch_quantity').value = batch.quantity;
+                
+                batchForm.style.display = 'block';
+                hideAllFormsExcept('batchForm');
+                statusP.textContent = `Status: Editing batch ${id}.`;
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+        async function saveBatch() {
+            const id = editBatchIdInput.value;
+            const isEditing = !!id;
+            const batchData = {
+                product_id: parseInt(document.getElementById('batch_product_id').value) || 0,
+                batch_no: document.getElementById('batch_batch_no').value || null,
+                manufacture_date: document.getElementById('batch_manufacture_date').value || null,
+                expiry_date: document.getElementById('batch_expiry_date').value || null,
+                quantity: parseInt(document.getElementById('batch_quantity').value) || 0
+            };
+
+            const endpoint = isEditing ? `/batches/${id}` : '/batches';
+            const method = isEditing ? 'PUT' : 'POST';
+            try {
+                await apiCall(endpoint, method, batchData);
+                statusP.textContent = `Status: Batch ${isEditing ? 'updated' : 'added'}!`;
+                hideForm('batch');
+                fetchBatches();
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+         async function deleteBatch(id) {
+            if (!confirm(`Delete Batch ID: ${id}?`)) return;
+            try {
+                await apiCall(`/batches/${id}`, 'DELETE');
+                statusP.textContent = `Status: Batch ${id} deleted!`;
+                fetchBatches();
+            } catch (error) { /* Status set by apiCall */ }
+         }
+         
+        // --- User Functions ---
+        const userTableBody = document.getElementById('userTableBody');
+        const userForm = document.getElementById('userForm');
+        const userFormTitle = document.getElementById('userFormTitle');
+        const editUserIdInput = document.getElementById('editUserId');
+
+        async function fetchUsers() {
+            userTableBody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+            try {
+                const data = await apiCall('/users');
+                userTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    userTableBody.innerHTML = '<tr><td colspan="6">No users found.</td></tr>';
+                } else {
+                    data.forEach(u => {
+                        const row = userTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${u.user_id}</td>
+                            <td>${u.username || ''}</td>
+                            <td>${u.full_name || ''}</td>
+                            <td>${u.email || ''}</td>
+                            <td>${u.role_id}</td>
+                            <td>
+                                <button onclick="editUser(${u.user_id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteUser(${u.user_id})">Delete</button>
+                            </td>`;
+                    });
+                }
+                statusP.textContent = `Status: Loaded ${data ? data.length : 0} users.`;
+            } catch (error) {
+                userTableBody.innerHTML = `<tr><td colspan="6">Error loading data. ${error.message}</td></tr>`;
+            }
+        }
+
+        async function editUser(id) {
+            try {
+                const user = await apiCall(`/users/${id}`);
+                userFormTitle.textContent = `Edit User ID: ${id}`;
+                editUserIdInput.value = id;
+                document.getElementById('user_username').value = user.username || '';
+                document.getElementById('user_full_name').value = user.full_name || '';
+                document.getElementById('user_email').value = user.email || '';
+                document.getElementById('user_role_id').value = user.role_id;
+                document.getElementById('user_password_hash').value = ''; 
+                
+                userForm.style.display = 'block';
+                hideAllFormsExcept('userForm');
+                statusP.textContent = `Status: Editing user ${id}.`;
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+        async function saveUser() {
+            const id = editUserIdInput.value;
+            const isEditing = !!id;
+            const userData = {
+                username: document.getElementById('user_username').value || null,
+                full_name: document.getElementById('user_full_name').value || null,
+                email: document.getElementById('user_email').value || null,
+                password_hash: document.getElementById('user_password_hash').value || null,
+                role_id: parseInt(document.getElementById('user_role_id').value) || 0
+            };
+
+            if (isEditing && !userData.password_hash) {
+                delete userData.password_hash;
+            }
+
+            const endpoint = isEditing ? `/users/${id}` : '/users';
+            const method = isEditing ? 'PUT' : 'POST';
+            try {
+                await apiCall(endpoint, method, userData);
+                statusP.textContent = `Status: User ${isEditing ? 'updated' : 'added'}!`;
+                hideForm('user');
+                fetchUsers();
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+         async function deleteUser(id) {
+            if (!confirm(`Delete User ID: ${id}?`)) return;
+            try {
+                await apiCall(`/users/${id}`, 'DELETE');
+                statusP.textContent = `Status: User ${id} deleted!`;
+                fetchUsers();
+            } catch (error) { /* Status set by apiCall */ }
+         }
+
+        // --- Role Functions ---
+        const roleTableBody = document.getElementById('roleTableBody');
+        const roleForm = document.getElementById('roleForm');
+        const roleFormTitle = document.getElementById('roleFormTitle');
+        const editRoleIdInput = document.getElementById('editRoleId');
+
+        async function fetchRoles() {
+            roleTableBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+            try {
+                const data = await apiCall('/roles');
+                roleTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    roleTableBody.innerHTML = '<tr><td colspan="4">No roles found.</td></tr>';
+                } else {
+                    data.forEach(r => {
+                        const row = roleTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${r.role_id}</td>
+                            <td>${r.role_name || ''}</td>
+                            <td>${r.description || ''}</td>
+                            <td>
+                                <button onclick="editRole(${r.role_id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteRole(${r.role_id})">Delete</button>
+                            </td>`;
+                    });
+                }
+                statusP.textContent = `Status: Loaded ${data ? data.length : 0} roles.`;
+            } catch (error) {
+                roleTableBody.innerHTML = `<tr><td colspan="4">Error loading data. ${error.message}</td></tr>`;
+            }
+        }
+
+        async function editRole(id) {
+            try {
+                const role = await apiCall(`/roles/${id}`);
+                roleFormTitle.textContent = `Edit Role ID: ${id}`;
+                editRoleIdInput.value = id;
+                document.getElementById('role_role_name').value = role.role_name || '';
+                document.getElementById('role_description').value = role.description || '';
+                
+                roleForm.style.display = 'block';
+                hideAllFormsExcept('roleForm');
+                statusP.textContent = `Status: Editing role ${id}.`;
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+        async function saveRole() {
+            const id = editRoleIdInput.value;
+            const isEditing = !!id;
+            const roleData = {
+                role_name: document.getElementById('role_role_name').value || null,
+                description: document.getElementById('role_description').value || null
+            };
+
+            const endpoint = isEditing ? `/roles/${id}` : '/roles';
+            const method = isEditing ? 'PUT' : 'POST';
+            try {
+                await apiCall(endpoint, method, roleData);
+                statusP.textContent = `Status: Role ${isEditing ? 'updated' : 'added'}!`;
+                hideForm('role');
+                fetchRoles();
+            } catch (error) { /* Status set by apiCall */ }
+        }
+
+         async function deleteRole(id) {
+            if (!confirm(`Delete Role ID: ${id}?`)) return;
+            try {
+                await apiCall(`/roles/${id}`, 'DELETE');
+                statusP.textContent = `Status: Role ${id} deleted!`;
+                fetchRoles();
+            } catch (error) { /* Status set by apiCall */ }
+         }
+         
+        // --- Temperature Log Functions (Read-Only) ---
+        const temperaturelogTableBody = document.getElementById('temperaturelogTableBody');
+
+        async function fetchTemperatureLogs() {
+            temperaturelogTableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+            try {
+                document.getElementById('temperaturelogSearchInput').onkeyup = () => filterTable('temperaturelog');
+                
+                const data = await apiCall('/temperaturelogs');
+                temperaturelogTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    temperaturelogTableBody.innerHTML = '<tr><td colspan="5">No temperature logs found.</td></tr>';
+                } else {
+                    data.forEach(log => {
+                        const row = temperaturelogTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${log.id}</td>
+                            <td>${log.shipment_id}</td>
+                            <td>${log.temperature_celsius}°C</td>
+                            <td>${log.recorded_by}</td>
+                            <td>${formatDateTime(log.recorded_at)}</td>`;
+                    });
+                }
+                statusP.textContent = `Status: Loaded ${data ? data.length : 0} temperature logs.`;
+            } catch (error) {
+                temperaturelogTableBody.innerHTML = `<tr><td colspan="5">Error loading data. ${error.message}</td></tr>`;
+            }
+        }
+
+        // --- Alert Functions (Read-Only) ---
+        const alertTableBody = document.getElementById('alertTableBody');
+
+        async function fetchAlerts() {
+            alertTableBody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
+            try {
+                document.getElementById('alertSearchInput').onkeyup = () => filterTable('alert');
+                
+                const data = await apiCall('/alerts');
+                alertTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    alertTableBody.innerHTML = '<tr><td colspan="8">No alerts found.</td></tr>';
+                } else {
+                    data.forEach(alert => {
+                        const row = alertTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${alert.id}</td>
+                            <td>${alert.shipment_id}</td>
+                            <td>${alert.alert_type || ''}</td>
+                            <td>${alert.severity || ''}</td>
+                            <td>${alert.alert_message || ''}</td>
+                            <td>${alert.temp_at_alert || 'N/A'}°C</td>
+                            <td>${alert.acknowledged_by || 'N/A'}</td>
+                            <td>${formatDateTime(alert.created_at)}</td>`;
+                    });
+                }
+                statusP.textContent = `Status: Loaded ${data ? data.length : 0} alerts.`;
+            } catch (error) {
+                alertTableBody.innerHTML = `<tr><td colspan="8">Error loading data. ${error.message}</td></tr>`;
+            }
+        }
+
+        // --- Audit Log Functions (Read-Only) ---
+        const auditlogTableBody = document.getElementById('auditlogTableBody');
+
+        async function fetchAuditLogs() {
+            auditlogTableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+            try {
+                document.getElementById('auditlogSearchInput').onkeyup = () => filterTable('auditlog');
+
+                const data = await apiCall('/auditlogs');
+                auditlogTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    auditlogTableBody.innerHTML = '<tr><td colspan="5">No audit logs found.</td></tr>';
+                } else {
+                    data.forEach(log => {
+                        const row = auditlogTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${log.id}</td>
+                            <td>${log.user_id || 'System'}</td>
+                            <td>${log.action || ''}</td>
+                            <td>${log.details || ''}</td>
+                            <td>${formatDateTime(log.created_at)}</td>`;
+                    });
+                }
+                statusP.textContent = `Status: Loaded ${data ? data.length : 0} audit logs.`;
+            } catch (error) {
+                auditlogTableBody.innerHTML = `<tr><td colspan="5">Error loading data. ${error.message}</td></tr>`;
+            }
+        }
+
+        // --- Filtering ---
+         function filterTable(type) {
+             const inputId = type + 'SearchInput';
+             const tableBodyId = type + 'TableBody';
+             // Handle the 'temperaturelog' case
+             const safeType = type.endsWith('log') ? type.slice(0, -3) + 'log' : type;
+             
+             const filter = document.getElementById(inputId).value.toUpperCase();
+             const tableBody = document.getElementById(tableBodyId);
+             const tr = tableBody.getElementsByTagName('tr');
+             
+             for (let i = 0; i < tr.length; i++) {
+                 const row = tr[i];
+                 const cells = row.getElementsByTagName('td');
+                 let found = false;
+                 if (cells.length > 0) {
+                     let colsToSearch = cells.length;
+                     if (row.querySelector('button.delete-btn')) {
+                         colsToSearch = cells.length - 1;
+                     }
+                     for (let j = 0; j < colsToSearch; j++) {
+                         const cell = cells[j];
+                         if (cell) {
+                             const txtValue = cell.textContent || cell.innerText;
+                             if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                 found = true;
+                                 break;
+                             }
+                         }
+                     }
+                 }
+                 if (found || cells.length === 0 || row.textContent.includes("No") || row.textContent.includes("Loading")) {
+                     row.style.display = "";
+                 } else {
+                     row.style.display = "none";
+                 }
+             }
+         }
 
         // --- Initial Load ---
         showSection('shipments'); // Show shipments by default

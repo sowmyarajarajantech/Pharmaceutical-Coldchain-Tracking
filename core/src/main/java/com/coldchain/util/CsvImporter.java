@@ -1,7 +1,14 @@
-// File: core/src/main/java/com/coldchain/util/CsvImporter.java
 package com.coldchain.util;
 
-import com.coldchain.service.TemperatureService;
+// 1. DELETE THE OLD SERVICE IMPORT
+// import com.coldchain.service.TemperatureService; 
+
+// 2. ADD IMPORTS FOR THE MODELS AND REPOSITORIES
+import com.coldchain.model.AuditLog;
+import com.coldchain.model.TemperatureLog;
+import com.coldchain.repository.AuditLogRepository;
+import com.coldchain.repository.TemperatureLogRepository;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -14,19 +21,21 @@ public class CsvImporter {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public static int importTemperatureLogs(File csvFile, int userId, String username) {
+    // 3. CHANGE THE METHOD TO ACCEPT THE REPOSITORIES
+    public static int importTemperatureLogs(File csvFile, int userId, String username, 
+                                            TemperatureLogRepository tempRepo, 
+                                            AuditLogRepository auditRepo) {
+        
         int importedCount = 0;
-        TemperatureService tempService = new TemperatureService();
+        // 4. DELETE THE OLD SERVICE LINE
+        // TemperatureService tempService = new TemperatureService(); 
 
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             br.readLine(); // Skip header line
 
             String line;
             while ((line = br.readLine()) != null) {
-            // Split the line by commas into an array
                 String[] values = line.split(",");
-
-                // ✅ Trim each value to remove extra spaces
                 for (int i = 0; i < values.length; i++) {
                     values[i] = values[i].trim();
                 }
@@ -37,9 +46,25 @@ public class CsvImporter {
                         LocalDateTime recordedAt = LocalDateTime.parse(values[1], FORMATTER);
                         BigDecimal temp = new BigDecimal(values[2]);
 
-                        // Use your service call (unchanged)
-                        tempService.recordTemperature(shipmentId, recordedAt, temp, userId, username);
+                        // 5. REPLACE THE OLD SERVICE CALL WITH THIS NEW LOGIC
+                        
+                        // Create and save the TemperatureLog
+                        TemperatureLog log = new TemperatureLog();
+                        log.setShipment_id(shipmentId);
+                        log.setRecorded_at(recordedAt);
+                        log.setTemperature_celsius(temp);
+                        log.setRecorded_by(userId);
+                        tempRepo.save(log); // Save using the repository
+
+                        // Create and save the AuditLog
+                        AuditLog audit = new AuditLog();
+                        audit.setUser_id(userId);
+                        audit.setAction("CSV_IMPORT_TEMP_LOG");
+                        audit.setDetails("User '" + username + "' imported temp " + temp + "C for shipment " + shipmentId);
+                        auditRepo.save(audit); // Save using the repository
+                        
                         importedCount++;
+                        
                     } catch (Exception e) {
                         System.err.println("WARN: Skipping invalid CSV row: " + line + " | Reason: " + e.getMessage());
                     }

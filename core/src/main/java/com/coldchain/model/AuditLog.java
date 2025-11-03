@@ -1,30 +1,31 @@
-// File: core/src/main/java/com/coldchain/model/AuditLog.java
 package com.coldchain.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "AuditLog")
 public class AuditLog {
-    private int auditId; // Corrected to int to match schema
-    private Integer userId;
-    private String actionType;
+
+    @Id
+    private long id; // Matches BIGINT
+
+    private Integer user_id; // Use Integer for nullable INT
+    private String action;
     private String details;
-    private LocalDateTime timestamp;
+    private LocalDateTime created_at;
 
-    public AuditLog(Integer userId, String actionType, String details) {
-        this.userId = userId;
-        this.actionType = actionType;
-        this.details = details;
-    }
-
-    // Getters and Setters for all fields...
-    public int getAuditId() { return auditId; }
-    public void setAuditId(int auditId) { this.auditId = auditId; }
-    public Integer getUserId() { return userId; }
-    public void setUserId(Integer userId) { this.userId = userId; }
-    public String getActionType() { return actionType; }
-    public void setActionType(String actionType) { this.actionType = actionType; }
+    // --- Getters and Setters ---
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+    public Integer getUser_id() { return user_id; }
+    public void setUser_id(Integer user_id) { this.user_id = user_id; }
+    public String getAction() { return action; }
+    public void setAction(String action) { this.action = action; }
     public String getDetails() { return details; }
     public void setDetails(String details) { this.details = details; }
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public LocalDateTime getCreated_at() { return created_at; }
+    public void setCreated_at(LocalDateTime created_at) { this.created_at = created_at; }
 }

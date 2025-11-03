@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 // --- THIS IS THE FIX ---
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 // --- THIS IS THE FIX ---
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan("com.coldchain.model")
 
 @SpringBootApplication
+@ComponentScan(basePackages = "com.coldchain")
 public class CoreApplication {
 
     public static void main(String[] args) {

@@ -1,7 +1,7 @@
 // File: desktop-ui/src/main/java/com/coldchain/app/MainApp.java
 package com.coldchain.app;
 
-// --- These are the tools we need to add ---
+
 import com.coldchain.CoreApplication; // <-- IMPORTANT: See note below
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
